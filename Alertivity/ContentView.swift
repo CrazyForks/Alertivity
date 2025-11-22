@@ -3,6 +3,8 @@ import AppKit
 
 private let highActivityDurationOptions: [Int] = [30, 60, 120,  240, 600]
 private let highActivityCPUThresholdOptions: [Int] = Array(stride(from: 20, through: 100, by: 15))
+    
+private let tabPadding: EdgeInsets = EdgeInsets(top: 24, leading: 45, bottom: 28, trailing: 45)
 
 struct SettingsView: View {
     @AppStorage("app.hideDockIcon") private var hideDockIcon = false
@@ -17,30 +19,14 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            // General tab
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Hide app icon in Dock", isOn: $hideDockIcon)
-
                 Toggle("Launch at login", isOn: $launchAtLogin)
-
-                Divider()
-                Text("Switching on this option keeps the app available from the menu bar while removing its Dock icon.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(.none)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Enable Launch at login to make the monitor available automatically whenever you sign in.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(.none)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal,50)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(tabPadding)
             .tabItem { Label("General", systemImage: "switch.2") }
 
-            // Menu Bar tab
             VStack(alignment: .leading, spacing: 12) {
                 MenuBarSettingsFields(
                     isMenuIconEnabled: $isMenuIconEnabled,
@@ -49,52 +35,42 @@ struct SettingsView: View {
                     showMetricIcon: $showMetricIcon
                 )
 
-                Divider()
-                Text("Display an activity indicator in the menu bar and choose when it appears.")
+                Text("Choose when the indicator appears and what it shows.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .lineLimit(.none)
-                    .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal,50)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(tabPadding)
             .tabItem { Label("Menu Bar", systemImage: "waveform") }
 
-            // Notifications tab
             VStack(alignment: .leading, spacing: 12) {
                 NotificationSettingsFields(notificationsEnabled: $notificationsEnabled)
 
-                Divider()
-                Text("Deliver macOS notifications whenever activity is critical or a process spikes usage.")
+                Text("Notifications fire when status is critical or a process crosses the high-activity rule.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .lineLimit(.none)
-                    .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal,50)
+            .padding(tabPadding)
             .tabItem { Label("Notifications", systemImage: "bell") }
 
-            // Detection Settings tab
             VStack(alignment: .leading, spacing: 12) {
                 DetectionSettingsFields(
                     highActivityDurationSeconds: $highActivityDurationSeconds,
                     highActivityCPUThresholdPercent: $highActivityCPUThresholdPercent
                 )
 
-                Divider()
-                Text("Processes must exceed the CPU threshold for the selected duration before they're marked as high activity.")
+                Text("Flags processes over \(highActivityCPUThresholdPercent)% for \(highActivityDurationSeconds) seconds.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .lineLimit(nil)
-                    .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal,50)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(tabPadding)
             .tabItem { Label("Detection", systemImage: "gearshape") }
         }
-    .padding(.vertical, 20)
-    .frame(minWidth: 420)
+        .frame(minWidth: 420)
     }
 }
 struct NoticePreferencesView: View {
@@ -108,36 +84,34 @@ struct NoticePreferencesView: View {
 
     @ViewBuilder
     var body: some View {
-        Section {
+        Section("Menu Bar") {
             MenuBarSettingsFields(
                 isMenuIconEnabled: $isMenuIconEnabled,
                 menuIconOnlyWhenHigh: $menuIconOnlyWhenHigh,
                 menuIconType: $menuIconType,
                 showMetricIcon: $showMetricIcon
             )
-        } header: {
-            Text("Menu Bar")
-        } footer: {
-            Text("Display an activity indicator in the menu bar and choose when it appears.")
         }
 
-        Section {
+        Section("Notifications") {
             NotificationSettingsFields(notificationsEnabled: $notificationsEnabled)
-        } header: {
-            Text("Notifications")
-        } footer: {
-            Text("Deliver macOS notifications whenever activity is critical or a process spikes usage.")
+
+            Text("Notifications fire when status is critical or a process crosses the high-activity rule.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
 
-        Section {
+        Section("Detection") {
             DetectionSettingsFields(
                 highActivityDurationSeconds: $highActivityDurationSeconds,
                 highActivityCPUThresholdPercent: $highActivityCPUThresholdPercent
             )
-        } header: {
-            Text("Detection Settings")
-        } footer: {
-            Text("Processes must exceed the CPU threshold for the selected duration before they're marked as high activity.")
+
+            Text("Flags processes over \(highActivityCPUThresholdPercent)% for \(highActivityDurationSeconds) seconds.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
@@ -340,12 +314,12 @@ private struct NoticePreferencesPreviewContainer: View {
 
 #Preview("Settings") {
     SettingsView()
-        .frame(width: 420)
+        .frame(width: 520)
 }
 
 #Preview("Notice Preferences") {
     NoticePreferencesPreviewContainer()
-        .frame(width: 360)
+        .frame(width: 420)
 }
 
 
@@ -393,7 +367,6 @@ private struct MenuBarSettingsFields: View {
 
     var body: some View {
         Toggle("Show indicator", isOn: $isMenuIconEnabled)
-
         Toggle("Only show on high activity", isOn: $menuIconOnlyWhenHigh)
             .disabled(!isMenuIconEnabled)
 
