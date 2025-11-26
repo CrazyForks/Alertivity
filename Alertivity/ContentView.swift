@@ -159,7 +159,7 @@ struct MenuStatusView: View {
 
                 MenuMetricRow(
                     systemImage: "internaldrive",
-                    value: metrics.disk.usage.formatted(.percent.precision(.fractionLength(0)))
+                    value: metrics.disk.formattedReadWriteSummary
                 )
 
                 MenuMetricRow(

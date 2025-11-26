@@ -39,7 +39,7 @@ struct ActivityStatus: Sendable, Equatable {
         let ranked: [(TriggerMetric, ActivityMetrics.MetricSeverity, Double)] = [
             (.cpu, cpuSeverity, metrics.cpuUsagePercentage),
             (.memory, memorySeverity, metrics.memoryUsage),
-            (.disk, diskSeverity, metrics.disk.usage)
+            (.disk, diskSeverity, metrics.disk.totalBytesPerSecond)
         ]
 
         let highest = ranked.max { lhs, rhs in
@@ -110,7 +110,7 @@ struct ActivityStatus: Sendable, Equatable {
         let nonNormalMetrics: [String] = [
             metrics.cpuSeverity != .normal ? "CPU \(metrics.cpuUsagePercentage.formatted(.percent.precision(.fractionLength(0))))" : nil,
             metrics.memorySeverity != .normal ? "Mem \(metrics.memoryUsage.formatted(.percent.precision(.fractionLength(0))))" : nil,
-            metrics.diskSeverity != .normal ? "Disk \(metrics.disk.usage.formatted(.percent.precision(.fractionLength(0))))" : nil
+            metrics.diskSeverity != .normal ? "Disk \(metrics.disk.formattedTotalPerSecond)/s" : nil
         ].compactMap { $0 }
 
         let summary = nonNormalMetrics.joined(separator: ", ")
@@ -155,7 +155,7 @@ struct ActivityStatus: Sendable, Equatable {
         case .memory:
             return metrics.memoryUsage
         case .disk:
-            return metrics.disk.usage
+            return metrics.disk.totalBytesPerSecond
         }
     }
 
@@ -171,7 +171,7 @@ struct ActivityStatus: Sendable, Equatable {
         case .memory:
             return "Memory"
         case .disk:
-            return "Disk"
+            return "Disk throughput"
         }
     }
 
@@ -182,7 +182,7 @@ struct ActivityStatus: Sendable, Equatable {
         case .memory:
             return metrics.memoryUsage.formatted(.percent.precision(.fractionLength(0)))
         case .disk:
-            return metrics.disk.usage.formatted(.percent.precision(.fractionLength(0)))
+            return metrics.disk.formattedTotalPerSecond + "/s"
         }
     }
 
