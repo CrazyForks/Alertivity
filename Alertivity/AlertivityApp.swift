@@ -9,10 +9,16 @@ private var dockVisibilityObserverTokens: [NSObjectProtocol] = []
 struct AlertivityApp: App {
     @StateObject private var monitor = ActivityMonitor()
     @StateObject private var notificationManager = NotificationManager()
-    @StateObject private var settings = SettingsStore()
+    @StateObject private var settings = AlertivityApp.makeSettingsStore()
 
     @State private var isMenuBarInserted = true
     @State private var hasInitialized = false
+
+#if DEBUG
+    private var isUITest: Bool {
+        ProcessInfo.processInfo.arguments.contains("UITests")
+    }
+#endif
 
     var body: some Scene {
         MenuBarExtra(
@@ -67,11 +73,31 @@ struct AlertivityApp: App {
                     NSApp.activate(ignoringOtherApps: true)
                 }
         }
+
+#if DEBUG
+        WindowGroup("Alertivity UI Tests") {
+            if isUITest {
+                UITestHarnessView(settings: settings)
+            } else {
+                EmptyView()
+            }
+        }
+#endif
     }
 
     private func performInitialSetup() {
         guard !hasInitialized else { return }
         hasInitialized = true
+
+#if DEBUG
+        if isUITest {
+            settings.hideDockIcon = false
+            DispatchQueue.main.async {
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+            }
+        }
+#endif
 
         startDockVisibilityObservers()
         applyDockVisibility(for: settings.hideDockIcon)
@@ -431,5 +457,58 @@ private struct SettingsMenuLinkRow: View {
     SettingsMenuLinkRow()
     .frame(width: 220)
     .padding()
+}
+#endif
+
+private extension AlertivityApp {
+    static func makeSettingsStore() -> SettingsStore {
+        var defaults: UserDefaults = .standard
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("UITests") {
+            let suiteName = "Alertivity.UITests"
+            defaults = UserDefaults(suiteName: suiteName) ?? .standard
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+#endif
+        return SettingsStore(userDefaults: defaults)
+    }
+}
+
+#if DEBUG
+private struct UITestHarnessView: View {
+    @ObservedObject var settings: SettingsStore
+
+    private let sampleMetrics = ActivityMetrics(
+        cpuUsage: 0.86,
+        memoryUsed: Measurement(value: 12, unit: .gigabytes),
+        memoryTotal: Measurement(value: 16, unit: .gigabytes),
+        runningProcesses: 96,
+        network: NetworkMetrics(
+            receivedBytesPerSecond: 2_400_000,
+            sentBytesPerSecond: 1_200_000
+        ),
+        disk: DiskMetrics(readBytesPerSecond: 38_000_000, writeBytesPerSecond: 28_000_000),
+        highActivityProcesses: []
+    )
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("UITest Harness")
+                .font(.title2.weight(.semibold))
+
+            MenuStatusView(metrics: sampleMetrics)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(.thinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            Form {
+                NoticePreferencesView(settings: settings)
+            }
+            .frame(maxHeight: .infinity, alignment: .topLeading)
+        }
+        .padding(22)
+        .frame(minWidth: 520, minHeight: 560, alignment: .topLeading)
+    }
 }
 #endif
