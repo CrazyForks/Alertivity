@@ -1,6 +1,6 @@
 # Alertivity
 
-![Screenshot ](<img/menupreview.png>)
+![Screenshot ](<img/menubar.png>)
 
 Alertivity is a macOS menu bar utility that samples CPU, memory, disk, network, and process data so you can spot trouble early. It summarizes system health as Normal/Elevated/Critical, highlights the metric that triggered the state, and offers quick actions on culprit processes.
 
